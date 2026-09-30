@@ -1,0 +1,13 @@
+{# CyberShield - shared Jinja macros
+   ================================
+   Server-rendered templates cannot call the JavaScript helpers in
+   static/js/common.js, so the badge markup lives here as macros.
+   Keep the class names in sync with those helpers and with css/style.css. #}
+
+{% macro severity_badge(sev) -%}
+<span class="badge badge-sev-{{ sev }}">{{ sev }}</span>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge badge-status-{{ status }}">{{ status }}</span>
+{%- endmacro %}

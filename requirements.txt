@@ -1,0 +1,9 @@
+# CyberShield - Real-Time Network Intrusion Detection & Security Monitoring
+# Install with:  pip install -r requirements.txt
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Werkzeug==3.0.3
+SQLAlchemy==2.0.31
+python-dotenv==1.0.1
+ReportLab==4.2.2
+scapy==2.6.1

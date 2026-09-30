@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Firewall Simulator{% endblock %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+  <div>
+    <h4 class="mb-1">Firewall Rule Simulator</h4>
+    <span class="text-cs-muted small">Preview how firewall rules would treat observed sources.
+      CyberShield <b>never blocks real traffic</b> &mdash; first match wins, implicit allow-all at the end.</span>
+  </div>
+  <span class="badge text-bg-warning" title="Simulator only - no packets are ever filtered">
+    <i class="bi bi-mortarboard"></i> EDUCATIONAL ONLY
+  </span>
+</div>
+
+<div class="row g-3 align-items-start">
+  <!-- ============ LEFT: forms ============ -->
+  <div class="col-lg-5">
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-plus-circle"></i> Add Rule</div>
+      <form id="fw-form" novalidate>
+        <div class="mb-2">
+          <label class="form-label small text-cs-muted" for="fw-type">ACTION</label>
+          <select id="fw-type" class="form-select">
+            <option value="BLOCK">BLOCK &mdash; deny matching traffic</option>
+            <option value="ALLOW">ALLOW &mdash; explicit permit</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small text-cs-muted" for="fw-target">TARGET</label>
+          <input id="fw-target" class="form-control cs-mono" autocomplete="off"
+                 placeholder="203.0.113.66  or  203.0.113.66:80  or  any">
+          <div class="invalid-feedback"></div>
+          <div class="form-text small text-cs-muted">
+            Accepted: IPv4, IPv4:port (1&ndash;65535) or <span class="cs-mono">any</span>.
+            CIDR/hostnames are not supported by the simulator.
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-cs-muted" for="fw-reason">REASON</label>
+          <input id="fw-reason" class="form-control" placeholder="Why this rule exists" maxlength="256">
+        </div>
+        <button type="submit" id="fw-add" class="btn btn-cs w-100">
+          <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          <i class="bi bi-plus-lg"></i> Add Rule
+        </button>
+      </form>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-panel-title"><i class="bi bi-play"></i> Test a Connection</div>
+      <div class="row g-2 align-items-start">
+        <div class="col-6">
+          <label class="form-label small text-cs-muted" for="sim-src">SOURCE IP</label>
+          <input id="sim-src" class="form-control cs-mono" placeholder="203.0.113.66">
+          <div class="invalid-feedback"></div>
+        </div>
+        <div class="col-6">
+          <label class="form-label small text-cs-muted" for="sim-port">DEST PORT</label>
+          <input id="sim-port" class="form-control cs-mono" placeholder="80" inputmode="numeric">
+          <div class="invalid-feedback"></div>
+        </div>
+        <div class="col-12">
+          <button id="sim-run" class="btn btn-outline-cs w-100">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            Simulate Decision
+          </button>
+        </div>
+        <div class="col-12" id="sim-result" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: rule table ============ -->
+  <div class="col-lg-7">
+    <div class="cs-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="cs-panel-title mb-0"><i class="bi bi-list-check"></i> Rule Table <span class="text-cs-muted" style="letter-spacing:0;text-transform:none">&mdash; evaluated top to bottom</span></div>
+        <button id="fw-refresh" class="btn btn-sm btn-outline-cs" title="Reload rule list">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+      <div class="table-responsive mt-3">
+        <table class="table table-dark-cs table-hover align-middle fw-table">
+          <thead>
+            <tr>
+              <th style="width:44px">#</th>
+              <th style="width:96px">Action</th>
+              <th>Target</th>
+              <th>Reason</th>
+              <th class="text-end" style="width:64px">Hits</th>
+              <th style="width:96px">Status</th>
+              <th style="width:168px" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="fw-body">
+            <tr><td colspan="7" class="cs-empty"><span class="spinner-border spinner-border-sm"></span> Loading rules...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/firewall.js') }}"></script>
+{% endblock %}

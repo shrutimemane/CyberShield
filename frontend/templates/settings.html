@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h4 class="mb-0">Detection Settings</h4>
+  <span class="text-cs-muted small">Tune the rule engine at runtime - changes apply to the next ingest batch immediately</span>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-sliders"></i> Detection Thresholds</div>
+      <form id="settings-form">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small">Port scan: unique ports threshold</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="port_scan_port_threshold" value="{{ settings.get('port_scan_port_threshold', '10') }}">
+            <div class="form-text text-cs-muted small">Alert when one source contacts more than this many ports</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Port scan: window (seconds)</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="port_scan_window_seconds" value="{{ settings.get('port_scan_window_seconds', '10') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Port scan: HIGH severity above</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="port_scan_high_threshold" value="{{ settings.get('port_scan_high_threshold', '25') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Excessive connections: threshold</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="conn_flood_threshold" value="{{ settings.get('conn_flood_threshold', '30') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Excessive connections: window (seconds)</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="conn_flood_window_seconds" value="{{ settings.get('conn_flood_window_seconds', '10') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Traffic anomaly: packet threshold</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="traffic_anomaly_pps_threshold" value="{{ settings.get('traffic_anomaly_pps_threshold', '120') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Traffic anomaly: window (seconds)</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="traffic_anomaly_window_seconds" value="{{ settings.get('traffic_anomaly_window_seconds', '10') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Suspicious IP: event threshold</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="suspicious_ip_event_threshold" value="{{ settings.get('suspicious_ip_event_threshold', '2') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Alert dedupe window (seconds)</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="alert_dedupe_seconds" value="{{ settings.get('alert_dedupe_seconds', '30') }}">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-cs btn-sm mt-3"><i class="bi bi-save"></i> Save Thresholds</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-broadcast"></i> Capture Sources</div>
+      <p class="small text-cs-muted mb-2">Live capture status:
+        {% if capture_available %}
+        <span class="badge bg-success">Scapy available</span> - requires admin rights / Npcap on Windows.
+        {% else %}
+        <span class="badge bg-secondary">Scapy not importable</span> - use Demo Mode or PCAP Analysis.
+        {% endif %}
+      </p>
+      <p class="small mb-0">
+        Live capture is optional. If it fails (permissions, missing Npcap), the app
+        keeps working with <b>Demo Mode</b> and <b>PCAP Analysis</b> - the same
+        detection pipeline runs on both.
+      </p>
+    </div>
+
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-vial"></i> Demo Attack Scenarios</div>
+      <p class="small text-cs-muted">Inject one scripted scenario (safe, synthetic - stored only in CyberShield's database):</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-cs btn-sm btn-scenario" data-s="port_scan"><i class="bi bi-radar"></i> Port Scan</button>
+        <button class="btn btn-outline-cs btn-sm btn-scenario" data-s="conn_flood"><i class="bi bi-door-open"></i> Connection Flood</button>
+        <button class="btn btn-outline-cs btn-sm btn-scenario" data-s="dos"><i class="bi bi-tsunami"></i> DoS-like Burst</button>
+      </div>
+      <hr class="border-secondary">
+      <div class="d-flex gap-2 flex-wrap">
+        <button id="btn-seed" class="btn btn-outline-cs btn-sm"><i class="bi bi-database-add"></i> Seed Full Demo Data</button>
+        <button id="btn-reset" class="btn btn-outline-danger-cs btn-sm"><i class="bi bi-trash"></i> Reset Security Data</button>
+      </div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-panel-title"><i class="bi bi-info-circle"></i> About</div>
+      <p class="small mb-1"><b>CyberShield</b> - Real-Time Network Intrusion Detection &amp; Security Monitoring.</p>
+      <p class="small text-cs-muted mb-0">
+        Educational rule-based SOC: port-scan, excessive-connection, volumetric
+        (DoS-like) and suspicious-IP detections with alerts, incidents, timeline
+        investigation, PCAP forensics, firewall simulation, evidence hashing and
+        security reports. Future enhancement (not implemented): ML-based anomaly scoring.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+"use strict";
+document.getElementById("settings-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const payload = {};
+  new FormData(ev.target).forEach((v, k) => payload[k] = v);
+  try {
+    await csPost("/api/settings", payload);
+    toast("Thresholds saved.", "ok");
+  } catch (e) { toast(e.message, "err"); }
+});
+
+document.querySelectorAll(".btn-scenario").forEach(b => b.addEventListener("click", async () => {
+  try {
+    const r = await csPost("/api/demo/inject", { scenario: b.dataset.s });
+    toast(`Injected ${r.scenario}: ${r.result.alerts_created} alerts, ${r.result.incidents_created} incidents.`, "ok");
+  } catch (e) { toast(e.message, "err"); }
+}));
+
+document.getElementById("btn-seed").addEventListener("click", async () => {
+  try {
+    const r = await csPost("/api/demo/seed");
+    toast(`Seeded: ${r.result.parsed} packets, ${r.result.alerts_created} alerts.`, "ok");
+  } catch (e) { toast(e.message, "err"); }
+});
+
+document.getElementById("btn-reset").addEventListener("click", async () => {
+  if (!confirm("Reset security data back to the demo baseline? Packets, alerts, incidents and audit logs are cleared, then the demo dataset is reseeded. Users, settings and uploaded PCAP files are kept.")) return;
+  try {
+    const r = await csPost("/api/system/reset");
+    toast(`Security data reset (${r.reseeded || 0} demo packets reseeded).`, "ok");
+  }
+  catch (e) { toast(e.message, "err"); }
+});
+</script>
+{% endblock %}

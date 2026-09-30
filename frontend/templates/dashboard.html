@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="cs-dash-head">
+  <div>
+    <h4 class="cs-dash-title">Security Operations Dashboard</h4>
+    <span class="text-cs-muted cs-dash-sub">Live view of monitored traffic, detections and risk</span>
+  </div>
+  <div class="d-flex gap-2 flex-wrap align-items-center">
+    <div class="cs-segmented" role="group" aria-label="Time range">
+      <button class="cs-seg-btn" data-hours="1" title="Last hour">1H</button>
+      <button class="cs-seg-btn" data-hours="6" title="Last 6 hours">6H</button>
+      <button class="cs-seg-btn active" data-hours="24" title="Last 24 hours">24H</button>
+      <button class="cs-seg-btn" data-hours="168" title="Last 7 days">7D</button>
+    </div>
+    <button id="btn-demo" class="btn btn-cs btn-sm"><i class="bi bi-play-circle"></i> Start Demo Mode</button>
+    <button id="btn-live" class="btn btn-outline-cs btn-sm"><i class="bi bi-broadcast"></i> Start Live Capture</button>
+    <button id="btn-csv" class="btn btn-outline-cs btn-sm" title="Download all alerts as CSV"><i class="bi bi-filetype-csv"></i> Export CSV</button>
+  </div>
+</div>
+
+<!-- ============ ROW 1: six compact metric cards ============ -->
+<div class="cs-metrics-grid cs-mb">
+  <div class="cs-card cs-metric accent">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-hdd-network"></i> Total Packets</span>
+    </div>
+    <div class="cs-metric-value" id="stat-packets">0</div>
+    <div class="cs-metric-sub" id="sub-packets">&mdash;</div>
+  </div>
+  <div class="cs-card cs-metric blue">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-diagram-3"></i> Active Connections</span>
+    </div>
+    <div class="cs-metric-value" id="stat-connections">0</div>
+    <div class="cs-metric-sub" id="sub-connections">unique sources, last 5 min</div>
+  </div>
+  <div class="cs-card cs-metric yellow">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-bell"></i> Security Alerts (24h)</span>
+    </div>
+    <div class="cs-metric-value" id="stat-alerts">0</div>
+    <div class="cs-metric-sub" id="sub-alerts">&mdash;</div>
+  </div>
+  <div class="cs-card cs-metric orange">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-geo-alt"></i> Suspicious IPs</span>
+    </div>
+    <div class="cs-metric-value" id="stat-suspicious">0</div>
+    <div class="cs-metric-sub" id="sub-suspicious">&mdash;</div>
+  </div>
+  <div class="cs-card cs-metric red">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-folder2-open"></i> Open Incidents</span>
+    </div>
+    <div class="cs-metric-value" id="stat-incidents">0</div>
+    <div class="cs-metric-sub" id="sub-incidents">&mdash;</div>
+  </div>
+  <div class="cs-card cs-metric cs-risk-card">
+    <div class="cs-metric-head">
+      <span class="cs-metric-label"><i class="bi bi-speedometer"></i> Risk Score</span>
+      <span id="risk-source" class="badge badge-status-NORMAL" title="How this score was computed">&mdash;</span>
+    </div>
+    <div class="cs-risk-row">
+      <div class="cs-risk-ring cs-risk-ring-sm" id="risk-ring" style="--risk:0">
+        <span class="val" id="stat-risk">&ndash;</span>
+        <span class="lbl">/ 100</span>
+      </div>
+      <div class="cs-risk-text">
+        <div class="cs-risk-severity" id="risk-label">INSUFFICIENT DATA</div>
+        <div class="cs-metric-sub" id="risk-factors">No open alerts, incidents or watchlist entries.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ROW 2: traffic chart (62%) + severity panel (38%) ============ -->
+<div class="cs-row-2 cs-mb">
+  <div class="cs-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+      <div class="cs-panel-title mb-0"><i class="bi bi-graph-up"></i> Network Traffic Over Time <span id="traffic-window-note" class="text-cs-muted" style="letter-spacing:0;text-transform:none">&mdash; window: 24H</span></div>
+      <div class="d-flex gap-3 cs-legend">
+        <span><span class="cs-tooltip-dot" style="background:#7B9669"></span>Packets</span>
+        <span><span class="cs-tooltip-dot" style="background:#6C8480"></span>Volume (KB)</span>
+      </div>
+    </div>
+    <div class="cs-chart-box cs-chart-traffic">
+      <canvas id="chart-traffic"></canvas>
+      <div id="traffic-empty" class="cs-chart-empty d-none">
+        <i class="bi bi-activity"></i>
+        <div>No packets in this window yet.</div>
+        <div class="small">Start Demo Mode or Live Capture - the chart fills as real packets arrive.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cs-card">
+    <div class="cs-panel-title"><i class="bi bi-pie-chart"></i> Alert Severity Distribution (24h)</div>
+    <div class="cs-chart-box cs-chart-severity">
+      <canvas id="chart-severity"></canvas>
+      <div id="severity-empty" class="cs-chart-empty d-none">
+        <i class="bi bi-check-circle"></i>
+        <div>No alerts in the last 24h.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ROW 3: alerts trend (58%) + top suspicious IPs (42%) ============ -->
+<div class="cs-row-3 cs-mb">
+  <div class="cs-card">
+    <div class="cs-panel-title"><i class="bi bi-graph-up-arrow"></i> Security Alerts Over Time <span id="alerts-window-note" class="text-cs-muted" style="letter-spacing:0;text-transform:none">&mdash; by severity (window: 24H)</span></div>
+    <div class="cs-chart-box cs-chart-alerts">
+      <canvas id="chart-alerts-time"></canvas>
+      <div id="alerts-empty" class="cs-chart-empty d-none">
+        <i class="bi bi-bell-slash"></i>
+        <div>No alerts recorded in this window.</div>
+        <div class="small">Detection output appears here as alerts fire.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cs-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="cs-panel-title mb-0"><i class="bi bi-geo-alt"></i> Top Suspicious IPs</div>
+      <a href="{{ url_for('ips_page') }}" class="small">Full analysis &rarr;</a>
+    </div>
+    <div id="top-ips" class="mt-2"><div class="cs-empty cs-empty-sm"><span class="spinner-border spinner-border-sm"></span> Loading...</div></div>
+  </div>
+</div>
+
+<!-- ============ ROW 4: recent alerts (58%) + incidents (42%) ============ -->
+<div class="cs-row-3 cs-mb">
+  <div class="cs-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="cs-panel-title mb-0"><i class="bi bi-bell"></i> Recent Security Alerts</div>
+      <a href="{{ url_for('alerts_page') }}" class="small">View all &rarr;</a>
+    </div>
+    <div class="table-responsive cs-scroll-y-sm mt-2">
+      <table class="table table-dark-cs table-sm">
+        <thead><tr><th>Time</th><th>Severity</th><th>Source</th><th>Category</th><th></th></tr></thead>
+        <tbody id="recent-alerts">
+          <tr><td colspan="5" class="cs-empty cs-empty-sm"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="cs-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="cs-panel-title mb-0"><i class="bi bi-folder2-open"></i> Recent Incidents</div>
+      <a href="{{ url_for('incidents_page') }}" class="small">All &rarr;</a>
+    </div>
+    <div id="recent-incidents" class="mt-2">
+      <div class="cs-empty cs-empty-sm"><span class="spinner-border spinner-border-sm"></span> Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ROW 5: monitor strip + attack injector ============ -->
+<div class="cs-row-2-wide cs-mb-0">
+  <div class="cs-card cs-monitor-strip py-2 px-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <span id="capture-badge" class="badge text-bg-secondary">&nbsp;</span>
+      <span class="small text-cs-muted" id="monitor-detail">Checking capture state...</span>
+      <span class="ms-auto small text-cs-muted">
+        <i class="bi bi-arrow-repeat"></i> Updated <span id="last-update">-</span>
+        <span class="text-cs-muted">&middot; auto-refresh 5s</span>
+      </span>
+    </div>
+  </div>
+  <div class="cs-card">
+    <div class="cs-panel-title mb-2"><i class="bi bi-bug"></i> Attack Scenario Injector <span class="text-cs-muted" style="letter-spacing:0;text-transform:none">&mdash; replays a safe scripted scenario</span></div>
+    <div class="cs-inject-row d-flex flex-wrap gap-2">
+      <button class="btn scenario-chip" data-scenario="port_scan"><i class="bi bi-radar"></i> Port Scan</button>
+      <button class="btn scenario-chip" data-scenario="conn_flood"><i class="bi bi-arrow-repeat"></i> Connection Flood</button>
+      <button class="btn scenario-chip" data-scenario="dos"><i class="bi bi-tsunami"></i> DoS Burst</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

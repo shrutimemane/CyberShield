@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Incidents{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap mb-4 gap-2">
+  <div>
+    <h4 class="mb-0">Incident Management</h4>
+    <span class="text-cs-muted small">Alert clusters escalated into investigate-able incidents</span>
+  </div>
+  <select id="f-status" class="form-select form-select-sm w-auto">
+    <option value="all">All statuses</option>
+    <option value="OPEN">Open</option>
+    <option value="INVESTIGATING">Investigating</option>
+    <option value="CONTAINED">Contained</option>
+    <option value="CLOSED">Closed</option>
+  </select>
+</div>
+
+<div class="cs-card">
+  <div class="table-responsive">
+    <table class="table table-dark-cs table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Ref</th><th>Title</th><th>Severity</th><th>Status</th>
+          <th>Source IP</th><th>Created</th><th>Alerts</th><th>Timeline</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="incidents-body">
+        <tr><td colspan="9" class="cs-empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/incidents.js') }}"></script>
+{% endblock %}

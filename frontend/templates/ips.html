@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}IP Analysis{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h4 class="mb-0">Suspicious IP Analysis</h4>
+  <span class="text-cs-muted small">Every source IP linked to detection activity, ranked by composite risk</span>
+</div>
+
+<div class="row g-3">
+  <!-- ============ IP list ============ -->
+  <div class="col-lg-5">
+    <div class="cs-card">
+      <div class="cs-panel-title"><i class="bi bi-list-ul"></i> IP Watchlist</div>
+      <div class="cs-scroll-y" style="max-height:620px">
+        <table class="table table-dark-cs table-hover">
+          <thead><tr><th>IP</th><th>Risk</th><th>Alerts</th><th>Categories</th></tr></thead>
+          <tbody id="ips-body"><tr><td colspan="4" class="cs-empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Detail panel ============ -->
+  <div class="col-lg-7">
+    <div class="cs-card" id="ip-detail">
+      <div class="cs-empty">Select an IP from the watchlist to investigate its profile.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ips.js') }}"></script>
+{% endblock %}

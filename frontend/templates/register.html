@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div class="cs-grid-bg"></div>
+<div class="cs-login-wrap">
+  <div class="cs-login-card">
+    <div class="text-center">
+      <div class="cs-login-logo"><i class="bi bi-shield-plus"></i></div>
+      <h1 class="h4 mb-1" style="letter-spacing:3px;">CYBER<span style="color:var(--cs-accent)"><b>SHIELD</b></span></h1>
+      <p class="text-cs-muted small mb-4">Create your security analyst account</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger py-2 small">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <form id="register-form" method="post" action="{{ url_for('register') }}" novalidate>
+      <div class="mb-2">
+        <label class="form-label small text-cs-muted">FULL NAME</label>
+        <input type="text" class="form-control" name="full_name" required
+               value="{{ form.get('full_name', '') if form else '' }}"
+               placeholder="Ada Lovelace" autocomplete="name">
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label small text-cs-muted">USERNAME</label>
+        <input type="text" class="form-control" name="username" required
+               value="{{ form.get('username', '') if form else '' }}"
+               placeholder="ada.l" autocomplete="username">
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label small text-cs-muted">EMAIL ADDRESS</label>
+        <input type="email" class="form-control" name="email" required
+               value="{{ form.get('email', '') if form else '' }}"
+               placeholder="ada@example.com" autocomplete="email">
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label small text-cs-muted">PASSWORD</label>
+        <div class="position-relative">
+          <input type="password" class="form-control pe-5" name="password" id="reg-password" required
+                 placeholder="At least 8 chars, letters + numbers" autocomplete="new-password">
+          <button type="button" class="cs-pw-toggle" data-target="reg-password" title="Show / hide password"
+                  aria-label="Show password"><i class="bi bi-eye"></i></button>
+        </div>
+        <div class="invalid-feedback"></div>
+        <div class="form-text small text-cs-muted">Minimum 8 characters with letters and numbers.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small text-cs-muted">CONFIRM PASSWORD</label>
+        <div class="position-relative">
+          <input type="password" class="form-control pe-5" name="confirm_password" id="reg-confirm" required
+                 placeholder="Re-enter password" autocomplete="new-password">
+          <button type="button" class="cs-pw-toggle" data-target="reg-confirm" title="Show / hide password"
+                  aria-label="Show password"><i class="bi bi-eye"></i></button>
+        </div>
+        <div class="invalid-feedback"></div>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="reg-terms" required>
+        <label class="form-check-label small text-cs-muted" for="reg-terms">
+          I understand CyberShield is an educational monitoring tool and agree to use it responsibly.
+        </label>
+        <div class="invalid-feedback">Please accept to continue.</div>
+      </div>
+      <button type="submit" class="btn btn-cs w-100 py-2" id="reg-submit">
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        <i class="bi bi-person-plus"></i> Create Account
+      </button>
+    </form>
+
+    <div class="text-center mt-4">
+      <small class="text-cs-muted">Already have an account?
+        <a href="{{ url_for('login') }}">Sign in</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  "use strict";
+  const form = document.getElementById("register-form");
+
+  // show / hide password toggles
+  document.querySelectorAll(".cs-pw-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+      btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
+  });
+
+  form.addEventListener("submit", ev => {
+    const fields = {
+      full_name: form.full_name.value, username: form.username.value,
+      email: form.email.value, password: form.password.value,
+      confirm_password: form.confirm_password.value,
+    };
+    const errors = csValidateRegistration(fields);
+    csShowFieldErrors(form, errors);
+    const terms = document.getElementById("reg-terms");
+    terms.classList.toggle("is-invalid", !terms.checked);
+    if (Object.keys(errors).length || !terms.checked) {
+      ev.preventDefault();
+      return;
+    }
+    // loading state + duplicate-submit guard
+    const btn = document.getElementById("reg-submit");
+    btn.disabled = true;
+    btn.querySelector(".spinner-border").classList.remove("d-none");
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}{% endblock %}
+
+{% block scripts %}
+<div class="cs-grid-bg"></div>
+<div class="cs-login-wrap">
+  <div class="cs-login-card">
+    <div class="text-center">
+      <div class="cs-login-logo"><i class="bi bi-shield-lock-fill"></i></div>
+      <h1 class="h4 mb-1" style="letter-spacing:3px;">CYBER<span style="color:var(--cs-accent)"><b>SHIELD</b></span></h1>
+      <p class="text-cs-muted small mb-4">Security Operations Console &mdash; authorized access only</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} py-2 small">
+        <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else 'bi-exclamation-triangle-fill' }}"></i> {{ message }}
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if error %}
+    <div class="alert alert-danger py-2 small">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('login', next=request.args.get('next', '')) }}">
+      <div class="mb-3">
+        <label class="form-label small text-cs-muted">USERNAME</label>
+        <input type="text" class="form-control" name="username" required autofocus
+               autocomplete="username" placeholder="admin">
+      </div>
+      <div class="mb-4">
+        <label class="form-label small text-cs-muted">PASSWORD</label>
+        <div class="position-relative">
+          <input type="password" class="form-control pe-5" name="password" id="login-password" required
+                 autocomplete="current-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+          <button type="button" class="cs-pw-toggle" data-target="login-password" title="Show / hide password"
+                  aria-label="Show password"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-cs w-100 py-2">
+        <i class="bi bi-fingerprint"></i> Access Console
+      </button>
+    </form>
+
+    <div class="text-center mt-4">
+      <small class="text-cs-muted">New to CyberShield?
+        <a href="{{ url_for('register') }}">Create an account</a></small>
+    </div>
+    <div class="text-center mt-2">
+      <small class="text-cs-muted">Default demo credentials: <span class="cs-mono">admin / admin123</span></small>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelector(".cs-pw-toggle").addEventListener("click", function () {
+    const input = document.getElementById(this.dataset.target);
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    this.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+    this.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  });
+</script>
+{% endblock %}

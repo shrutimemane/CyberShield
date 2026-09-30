@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ incident.incident_ref }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap mb-4 gap-2">
+  <div>
+    <h4 class="mb-0"><span class="cs-mono">{{ incident.incident_ref }}</span> - {{ incident.title }}</h4>
+    <span class="text-cs-muted small">Incident investigation &amp; evidence timeline</span>
+  </div>
+  <div class="d-flex gap-2 align-items-center flex-wrap">
+    {{ ui.severity_badge(incident.severity) }}
+    {{ ui.status_badge(incident.status) }}
+    <a href="{{ url_for('incidents_page') }}" class="btn btn-outline-cs btn-sm">&larr; All incidents</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- ============ LEFT: details ============ -->
+  <div class="col-lg-4">
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-info-circle"></i> Incident Details</div>
+      <table class="table table-dark-cs">
+        <tr><td class="text-cs-muted">Source IP</td>
+            <td class="cs-mono"><a href="/ips?focus={{ incident.source_ip | urlencode }}">{{ incident.source_ip }}</a></td></tr>
+        <tr><td class="text-cs-muted">Destination</td>
+            <td class="cs-mono">{{ incident.destination_ip or "-" }}</td></tr>
+        <tr><td class="text-cs-muted">Created</td><td>{{ fmt_dt(incident.created_at) }}</td></tr>
+        <tr><td class="text-cs-muted">Updated</td><td>{{ fmt_dt(incident.updated_at) }}</td></tr>
+        <tr><td class="text-cs-muted">Description</td><td class="small">{{ incident.description }}</td></tr>
+      </table>
+    </div>
+
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-shield-check"></i> Evidence Integrity</div>
+      <p class="small text-cs-muted">SHA-256 over this incident and its full timeline - proves the record has not been altered.</p>
+      <div class="cs-mono small" style="word-break:break-all">{{ evidence_hash }}</div>
+      <button id="btn-copy-hash" class="btn btn-sm btn-outline-cs mt-2"><i class="bi bi-clipboard"></i> Copy hash</button>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-panel-title"><i class="bi bi-gear"></i> Actions</div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-sm btn-outline-cs btn-status" data-status="INVESTIGATING"><i class="bi bi-search"></i> Mark Investigating</button>
+        <button class="btn btn-sm btn-outline-cs btn-status" data-status="CONTAINED"><i class="bi bi-shield-check"></i> Mark Contained</button>
+        <button class="btn btn-sm btn-outline-danger-cs btn-status" data-status="CLOSED"><i class="bi bi-check2-circle"></i> Close Incident</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: timeline + alerts ============ -->
+  <div class="col-lg-8">
+    <div class="cs-card mb-3">
+      <div class="cs-panel-title"><i class="bi bi-clock-history"></i> Investigation Timeline</div>
+      <ul class="cs-timeline mb-3">
+        {% for e in events %}
+        <li class="ev-{{ e.event_type }}">
+          <div class="small text-cs-muted">
+            {{ fmt_dt(e.created_at) }} &bull; {{ e.actor }}
+            <span class="badge bg-secondary ms-1">{{ e.event_type }}</span>
+          </div>
+          <div class="small">{{ e.message }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      <form id="note-form">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" id="note-input"
+                 placeholder="Add investigation note (who, what, next step)...">
+          <button class="btn btn-cs" type="submit"><i class="bi bi-plus-lg"></i> Add Note</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-panel-title"><i class="bi bi-bell"></i> Related Alerts</div>
+      <div class="table-responsive">
+        <table class="table table-dark-cs">
+          <thead><tr><th>Time</th><th>Severity</th><th>Type</th><th>Reason</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for a in alerts %}
+            <tr>
+              <td class="cs-mono text-nowrap">{{ fmt_dt(a.created_at) }}</td>
+              <td>{{ ui.severity_badge(a.severity) }}</td>
+              <td><span class="cs-mono">{{ a.alert_type }}</span></td>
+              <td class="small">{{ a.reason }}</td>
+              <td>{{ ui.status_badge(a.status) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="cs-empty">No alerts attached.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+"use strict";
+document.getElementById("note-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const input = document.getElementById("note-input");
+  const message = input.value.trim();
+  if (!message) return;
+  try {
+    await csPost("/api/incidents/{{ incident.id }}/note", { message });
+    location.reload();
+  } catch (e) { toast(e.message, "err"); }
+});
+
+document.querySelectorAll(".btn-status").forEach(b => b.addEventListener("click", async () => {
+  try {
+    await csPost("/api/incidents/{{ incident.id }}/status", { status: b.dataset.status });
+    location.reload();
+  } catch (e) { toast(e.message, "err"); }
+}));
+
+document.getElementById("btn-copy-hash").addEventListener("click", () => {
+  navigator.clipboard.writeText("{{ evidence_hash }}")
+    .then(() => toast("Evidence hash copied.", "ok"));
+});
+</script>
+{% endblock %}

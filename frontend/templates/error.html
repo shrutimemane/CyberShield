@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height:60vh">
+  <div class="cs-card text-center" style="max-width:460px">
+    <div class="display-4 text-cs-muted"><i class="bi bi-shield-exclamation"></i></div>
+    <h3 class="mt-2">{{ code }}</h3>
+    <p class="text-cs-muted">{{ message }}</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-cs btn-sm"><i class="bi bi-speedometer2"></i> Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}
